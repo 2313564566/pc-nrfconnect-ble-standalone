@@ -22,6 +22,8 @@ import TextInput from '../components/input/TextInput';
 import Spinner from '../components/Spinner';
 import { DiscoveryOptions } from '../reducers/discoveryReducer';
 import withHotkey from '../utils/withHotkey';
+import { logger } from 'pc-nrfconnect-shared';
+import { toHexString } from '../utils/stringUtil';
 
 const matchesFilter = filterRegexp => device => {
     if (device.name.search(filterRegexp) >= 0) return true;
@@ -37,7 +39,8 @@ class DiscoveredDevices extends React.PureComponent {
         window.addEventListener('core:toggle-scan', toggleScan);
         window.addEventListener('core:clear-scan', clearDevicesList);
 
-        this.handleFilterChange = this.handleFilterChange.bind(this);
+        this.handleNameFilterChange = this.handleNameFilterChange.bind(this);
+        this.handleRawDataFilterChange = this.handleRawDataFilterChange.bind(this);
         this.handleSortByRssiCheckedChange = this.handleCheckedChange.bind(
             this,
             'sortByRssi'
@@ -58,9 +61,15 @@ class DiscoveredDevices extends React.PureComponent {
         setDiscoveryOptions(this.discoveryOptions);
     }
 
-    handleFilterChange(e) {
+    handleNameFilterChange(e) {
         const { setDiscoveryOptions } = this.props;
-        this.discoveryOptions.filterString = e.target.value;
+        this.discoveryOptions.namefilterString = e.target.value;
+        setDiscoveryOptions(this.discoveryOptions);
+    }
+
+    handleRawDataFilterChange(e) {
+        const { setDiscoveryOptions } = this.props;
+        this.discoveryOptions.rawDatafilterString = e.target.value;
         setDiscoveryOptions(this.discoveryOptions);
     }
 
@@ -109,33 +118,44 @@ class DiscoveredDevices extends React.PureComponent {
                         className="adv-label"
                         defaultChecked={discoveryOptions.sortByRssi}
                         onChange={this.handleSortByRssiCheckedChange}
-                        label="Sort by signal strength"
+                        label="按信号强度排序"
                     />
                 </Form.Group>
                 <TextInput
                     inline
-                    title="Filter list by device name or address"
-                    label="Filter:"
+                    title="过滤设备名称或者mac地址"
+                    label="过滤:"
                     className="adv-value"
-                    value={this.discoveryOptions.filterString}
-                    onChange={this.handleFilterChange}
+                    value={this.discoveryOptions.namefilterString}
+                    onChange={this.handleNameFilterChange}
                     labelClassName=""
                     wrapperClassName=""
-                    placeholder="Device name or address"
+                    placeholder="设备名称或者mac地址"
+                />
+                <TextInput
+                    inline
+                    title="过滤UUIDs"
+                    label="过滤:"
+                    className="adv-value"
+                    value={this.discoveryOptions.rawDatafilterString}
+                    onChange={this.handleRawDataFilterChange}
+                    labelClassName=""
+                    wrapperClassName=""
+                    placeholder="Service UUIDs"
                 />
                 <Form.Group controlId="activeScanCheck">
                     <Form.Check
                         className="adv-label"
                         defaultChecked={discoveryOptions.activeScan}
                         onChange={this.handleActiveScanCheck}
-                        label="Active scan"
+                        label="扫描时间"
                     />
                 </Form.Group>
                 <TextInput
                     type="number"
                     inline
                     title="Timeout on scanning process (sec)"
-                    label="Timeout:"
+                    label="时间:"
                     className="adv-timeout"
                     value={discoveryOptions.scanTimeout}
                     labelClassName=""
@@ -149,11 +169,22 @@ class DiscoveredDevices extends React.PureComponent {
 
         let discoveredDeviceList = discoveredDevices.valueSeq();
 
-        const { filterRegexp } = discoveryOptions;
+        const { filterRegexp, rawDatafilterString } = discoveryOptions;
         if (filterRegexp) {
             discoveredDeviceList = discoveredDeviceList.filter(
                 matchesFilter(filterRegexp)
             );
+        }
+
+        if(rawDatafilterString){
+            discoveredDeviceList = discoveredDeviceList.filter(device => {
+                // if(device.adData.get("BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA")
+                //  && toHexString(device.adData.get("BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA")).replaceAll("-","").includes(rawDatafilterString)
+                // )
+                // return true
+                if(device.services.size > 0 &&  device.services.some(service => service.includes(rawDatafilterString))) return true
+                return false;
+            });
         }
 
         return (
@@ -179,7 +210,7 @@ class DiscoveredDevices extends React.PureComponent {
                         className="btn btn-primary btn-nordic"
                     >
                         <span className="mdi mdi-trash-can" />
-                        <span>Clear</span>
+                        <span>清除</span>
                     </Button>
                     <div className="discovery-options-expand">
                         <span
@@ -189,7 +220,7 @@ class DiscoveredDevices extends React.PureComponent {
                             tabIndex={0}
                         >
                             <i className={`mdi mdi-${dirIcon}`} />
-                            Options
+                            选项
                         </span>
                         {discoveryOptionsDiv}
                     </div>
@@ -198,6 +229,7 @@ class DiscoveredDevices extends React.PureComponent {
                 <div style={{ paddingTop: '0px' }}>
                     {discoveredDeviceList.map((device, address) => {
                         const key = `${address}`;
+                        // logger.info("device:", device);
                         return (
                             <DiscoveredDevice
                                 key={key}

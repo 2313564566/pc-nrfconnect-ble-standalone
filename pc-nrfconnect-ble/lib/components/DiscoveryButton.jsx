@@ -24,11 +24,11 @@ const DiscoveryButton = props => {
     let hoverText;
 
     if (scanInProgress) {
-        labelString = 'Stop scan';
+        labelString = '停止扫描';
         iconName = 'mdi mdi-stop';
         hoverText = 'Stop scan (Alt+S)';
     } else {
-        labelString = 'Start scan';
+        labelString = '开始扫描';
         iconName = 'mdi mdi-play';
         hoverText = 'Start scan (Alt+S)';
     }

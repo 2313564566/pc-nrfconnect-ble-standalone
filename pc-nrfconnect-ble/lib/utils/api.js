@@ -48,6 +48,7 @@ export const ImmutableDevice = Record({
     connectionSupervisionTimeout: null,
     services: List(),
     rssi: null,
+    allRssi: List(),
     scanResponse: false,
     bonded: false,
     securityMode: null,
@@ -197,6 +198,7 @@ export function getImmutableDevice(device) {
         slaveLatency: device.slaveLatency,
         connectionSupervisionTimeout: device.connectionSupervisionTimeout,
         services: List(device.services),
+        allRssi: List(),
         rssi: device.rssi,
         scanResponse: device.scanResponse,
         ownPeriphInitiatedPairingPending:

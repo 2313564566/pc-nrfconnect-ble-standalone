@@ -51,7 +51,7 @@
             "category": "Development",
             "icon": "resources/icon.icns"
         },
-        "afterSign": "build/notarize.js",
+        "afterSign": null,
         "mac": {
             "category": "public.app-category.developer-tools",
             "artifactName": "${name}-${version}-${os}.${ext}",
@@ -59,7 +59,10 @@
             "gatekeeperAssess": false,
             "entitlements": "build/entitlements.mac.plist",
             "entitlementsInherit": "build/entitlements.mac.plist",
-            "icon": "resources/icon.icns"
+            "icon": "resources/icon.icns",
+            "identity": null,     
+            "forceCodeSigning": false,
+            "signIgnore": true
         },
         "dmg": {
             "artifactName": "${name}-${version}.${ext}",

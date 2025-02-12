@@ -17,8 +17,10 @@ import * as apiHelper from '../utils/api';
 export const DiscoveryOptions = params =>
     new Record({
         expanded: false,
-        sortByRssi: false,
-        filterString: '',
+        sortByRssi: true,
+        namefilterString: '',
+        rawDatafilterString: '9999',
+        // rawDatafilterString: 'BF7B2DD963FE109F',
         scanInterval: 100,
         scanWindow: 20,
         scanTimeout: persistentStore.scanTimeout(),
@@ -78,7 +80,14 @@ function deviceDiscovered(oldState, device) {
         // Merge existing adData with new to keep everything that is not updated
         const adData = existingDevice.adData.merge(newDevice.adData);
         newDevice = newDevice.mergeIn(['adData'], adData);
+
+        newDevice = newDevice.setIn(['allRssi'], existingDevice.allRssi.concat(newDevice.rssi));
+    } else {
+        newDevice = newDevice.setIn(['allRssi'], newDevice.allRssi.concat(newDevice.rssi));
     }
+
+    logger.debug(`address: ${device.address}, allRssi: ${newDevice.allRssi}`);
+
     if (newDevice.name === null) {
         newDevice = newDevice.setIn(['name'], '');
     }
@@ -150,7 +159,7 @@ function toggleOptionsExpanded(state) {
 function discoverySetOptions(state, options) {
     const newOptions = {
         ...options,
-        filterRegexp: new RegExp(options.filterString, 'i'),
+        filterRegexp: new RegExp(options.namefilterString, 'i'),
     };
     return applyFilters(state.set('options', DiscoveryOptions(newOptions)));
 }
