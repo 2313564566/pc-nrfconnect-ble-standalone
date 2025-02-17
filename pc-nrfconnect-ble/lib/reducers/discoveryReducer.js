@@ -13,6 +13,7 @@ import * as AdapterAction from '../actions/adapterActions';
 import * as DiscoveryAction from '../actions/discoveryActions';
 import { persistentStore } from '../common/Persistentstore';
 import * as apiHelper from '../utils/api';
+import { appendToCsv } from '../utils/appendToCsv';
 
 export const DiscoveryOptions = params =>
     new Record({
@@ -42,6 +43,26 @@ function scanStarted(state) {
 
 function scanStopped(state) {
     logger.info('Scan stopped');
+    const { devices, options } = state;
+    devices.forEach(device => {
+        if (options.rawDatafilterString) {
+            if (device.services.size > 0 && device.services.some(service => service.includes(options.rawDatafilterString))) {
+                appendToCsv({
+                    avg: (device.allRssi.reduce((a, b) => a + b, 0) / device.allRssi.size).toFixed(2) + ' dBm',
+                    max: device.allRssi.max() + ' dBm', 
+                    min: device.allRssi.min() + ' dBm',
+                    mac: device.address,
+                });
+            }
+        } else {
+            appendToCsv({
+                avg: (device.allRssi.reduce((a, b) => a + b, 0) / device.allRssi.size).toFixed(2) + ' dBm',
+                max: device.allRssi.max() + ' dBm',
+                min: device.allRssi.min() + ' dBm', 
+                mac: device.address,
+            });
+        }
+    });
     return state;
 }
 

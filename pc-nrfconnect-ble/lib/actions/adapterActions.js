@@ -20,6 +20,7 @@ import { hexStringToArray, toHexString } from '../utils/stringUtil';
 import { BLEEventState, BLEPHYType } from './common';
 import { discoverServices } from './deviceDetailsActions';
 import { showErrorDialog } from './errorDialogActions';
+import { scanStopped } from './discoveryActions';
 
 export const ADAPTER_OPEN = 'ADAPTER_OPEN';
 export const ADAPTER_OPENED = 'ADAPTER_OPENED';
@@ -563,6 +564,7 @@ function setupListeners(dispatch, getState, adapterToUse) {
 
     adapterToUse.on('scanTimedOut', () => {
         dispatch(scanTimeoutAction(adapterToUse));
+        dispatch(scanStopped());
     });
 
     adapterToUse.on('advertiseTimedOut', () => {

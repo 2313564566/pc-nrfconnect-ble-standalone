@@ -192,3 +192,7 @@ export function changeActiveScan() {
 export function setTimeoutChange(value) {
     return setTimeoutChangeAction(value);
 }
+
+export function scanStopped(){
+    return scanStoppedAction();
+}
