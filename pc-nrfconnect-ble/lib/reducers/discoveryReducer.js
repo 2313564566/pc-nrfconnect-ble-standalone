@@ -44,25 +44,29 @@ function scanStarted(state) {
 function scanStopped(state) {
     logger.info('Scan stopped');
     const { devices, options } = state;
-    devices.forEach(device => {
-        if (options.rawDatafilterString) {
-            if (device.services.size > 0 && device.services.some(service => service.includes(options.rawDatafilterString))) {
-                appendToCsv({
-                    avg: (device.allRssi.reduce((a, b) => a + b, 0) / device.allRssi.size).toFixed(2) + ' dBm',
-                    max: device.allRssi.max() + ' dBm', 
-                    min: device.allRssi.min() + ' dBm',
-                    mac: device.address,
-                });
-            }
-        } else {
-            appendToCsv({
-                avg: (device.allRssi.reduce((a, b) => a + b, 0) / device.allRssi.size).toFixed(2) + ' dBm',
-                max: device.allRssi.max() + ' dBm',
-                min: device.allRssi.min() + ' dBm', 
-                mac: device.address,
-            });
-        }
-    });
+    let foundDevice = null;
+    
+    if (options.rawDatafilterString) {
+        foundDevice = devices.find(device => 
+            device.services.size > 0 && device.services.some(service => 
+                service.includes(options.rawDatafilterString)
+            )
+        );
+    }
+    
+    // 如果没找到满足条件的设备或没有过滤条件，就取第一个设备
+    if (!foundDevice && devices.size > 0) {
+        foundDevice = devices.first();
+    }
+
+    if (foundDevice) {
+        appendToCsv({
+            avg: (foundDevice.allRssi.reduce((a, b) => a + b, 0) / foundDevice.allRssi.size).toFixed(2) + ' dBm',
+            max: foundDevice.allRssi.max() + ' dBm',
+            min: foundDevice.allRssi.min() + ' dBm',
+            mac: foundDevice.address,
+        });
+    }
     return state;
 }
 
